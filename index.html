@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0a">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Black Friday 金魚狂歡</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -31,13 +34,17 @@
             background-color: var(--bg-color);
             color: white;
             overflow-x: hidden;
+            /* Mobile viewport fix */
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
             background-image: 
                 radial-gradient(circle at 20% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 40%),
                 radial-gradient(circle at 80% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 40%);
             touch-action: manipulation;
+            padding-bottom: var(--app-footer-height); /* Space for footer */
+            padding-top: var(--app-header-height); /* Space for header */
         }
 
         /* App Header */
@@ -91,12 +98,9 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            padding-top: calc(var(--app-header-height) + 20px);
-            padding-bottom: calc(var(--app-footer-height) + 20px);
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
         }
 
         /* Visual Content */
@@ -154,7 +158,7 @@
         /* Wheel Responsive */
         .wheel-wrapper {
             position: relative;
-            width: 240px;
+            width: 240px; /* Fixed size for stability */
             height: 240px;
             margin: 0 auto 25px;
         }
@@ -282,7 +286,6 @@
             padding: 8px 20px;
             border-radius: 20px;
             font-size: 0.9rem;
-            cursor: pointer;
         }
 
         .discount-big {
@@ -301,7 +304,7 @@
             left: 0;
             width: 100%;
             height: var(--app-footer-height);
-            background: var(--glass-bg);
+            background: var(--bg-color);
             border-top: 1px solid rgba(255,255,255,0.1);
             display: flex;
             justify-content: space-around;
@@ -341,21 +344,161 @@
             color: #ccc;
             margin-bottom: 8px;
         }
+
     </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "react/": "https://aistudiocdn.com/react@^19.2.0/",
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-      }
-    }
-    </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
-    <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+
+    <header class="app-header">
+        <h1>BF 金魚狂歡</h1>
+    </header>
+
+    <!-- Floating Bubbles Background -->
+    <div class="bubbles" id="bubbles"></div>
+
+    <div class="content-scroll">
+        
+        <div class="goldfish-showcase">
+            <div class="fish">🐠</div>
+            <div class="fish">🐡</div>
+            <div class="fish">🐟</div>
+        </div>
+
+        <div class="game-card">
+            <div class="game-title">幸運 789</div>
+            <p class="game-desc">點擊轉盤，贏取 Black Friday 專屬折扣</p>
+            
+            <div class="wheel-wrapper">
+                <div class="pointer"></div>
+                <div class="wheel" id="wheel">
+                    <div class="wheel-content">
+                        <div class="segment-number num-7">7</div>
+                        <div class="segment-number num-8">8</div>
+                        <div class="segment-number num-9">9</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="spin-btn" id="spinBtn">立即抽獎</button>
+        </div>
+
+        <div class="promo-details">
+            <h3>🎉 活動詳情</h3>
+            <p>📍 <strong>7 字：</strong> 全單 7 折 (大獎)</p>
+            <p>📍 <strong>8 字：</strong> 全單 8 折</p>
+            <p>📍 <strong>9 字：</strong> 全單 9 折</p>
+            <p style="margin-top:10px; font-size: 0.8rem; color: #666;">
+                有效期：11月24-26日<br>
+                出示此畫面即可兌換
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Modal Result -->
+    <div class="result-overlay" id="resultOverlay">
+        <div class="result-box">
+            <div style="font-size: 3rem;">🎊</div>
+            <h2 style="margin-top: 10px; color:white;">恭喜獲得</h2>
+            <div class="discount-big" id="discountValue">8折</div>
+            <p style="color: #aaa; font-size: 0.9rem;">截圖保存此畫面</p>
+            <button class="close-btn" onclick="closeModal()">關閉</button>
+        </div>
+    </div>
+
+    <nav class="app-footer">
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>首頁</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span>獎品</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">📍</span>
+            <span>店舖</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>會員</span>
+        </a>
+    </nav>
+
+    <script>
+        // Bubbles
+        const bubblesContainer = document.getElementById('bubbles');
+        for(let i=0; i<12; i++) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            bubble.style.left = Math.random() * 100 + '%';
+            bubble.style.width = (Math.random() * 40 + 10) + 'px';
+            bubble.style.height = bubble.style.width;
+            bubble.style.animationDuration = (Math.random() * 10 + 8) + 's';
+            bubble.style.animationDelay = (Math.random() * 5) + 's';
+            bubblesContainer.appendChild(bubble);
+        }
+
+        // Game Logic
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn');
+        const resultOverlay = document.getElementById('resultOverlay');
+        const discountValue = document.getElementById('discountValue');
+        let isSpinning = false;
+
+        spinBtn.addEventListener('click', () => {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            spinBtn.style.opacity = '0.7';
+
+            // Probabilities
+            const outcomes = [7, 8, 9]; 
+            const result = outcomes[Math.floor(Math.random() * outcomes.length)];
+            
+            // Calculate rotation
+            // 7 (Pink, 0-120) -> Target 60deg -> Rotate -60 or 300
+            // 8 (Blue, 120-240) -> Target 180deg -> Rotate -180
+            // 9 (Yellow, 240-360) -> Target 300deg -> Rotate -300 or 60
+            
+            let targetAngle = 0;
+            if(result === 7) targetAngle = 300;
+            if(result === 8) targetAngle = 180;
+            if(result === 9) targetAngle = 60;
+
+            // Noise +/- 30 deg to vary landing position
+            const noise = Math.floor(Math.random() * 50) - 25; 
+            const totalRotation = 1800 + targetAngle + noise; // 5 spins
+
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                spinBtn.disabled = false;
+                spinBtn.style.opacity = '1';
+                spinBtn.innerText = "再玩一次";
+                
+                // Show Modal
+                if(result === 7) discountValue.innerHTML = "7 <span style='font-size:1.5rem'>折</span>";
+                if(result === 8) discountValue.innerHTML = "8 <span style='font-size:1.5rem'>折</span>";
+                if(result === 9) discountValue.innerHTML = "9 <span style='font-size:1.5rem'>折</span>";
+                
+                // Highlight color update
+                if(result === 7) discountValue.style.color = "var(--neon-pink)";
+                if(result === 8) discountValue.style.color = "var(--neon-blue)";
+                if(result === 9) discountValue.style.color = "var(--neon-yellow)";
+
+                resultOverlay.classList.add('active');
+
+                // Haptic feedback (if supported on mobile)
+                if (navigator.vibrate) navigator.vibrate(200);
+
+            }, 4000);
+        });
+
+        function closeModal() {
+            resultOverlay.classList.remove('active');
+        }
+    </script>
 </body>
 </html>
